@@ -1,10 +1,13 @@
+name: Releases
+
 on:
-  workflow_dispatch:
-name: Auto-Build
+  push:
+    tags:
+      - "*"
 jobs:
   build:
     name: Build
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -36,29 +39,10 @@ jobs:
             (cd mosh/src/frontend && sha256sum mosh-server mosh-client)
             echo '```'
           ) | tee release.md
-      - id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/'
         with:
-          tag_name: run-${{ github.run_number }}
-          release_name: "Build #${{ github.run_number }}"
-          body_path: release.md
-          prerelease: false
-          draft: false
-      - uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: mosh/src/frontend/mosh-client
-          asset_name: mosh-client
-          asset_content_type: application/octet-stream
-      - uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: mosh/src/frontend/mosh-server
-          asset_name: mosh-server
-          asset_content_type: application/octet-stream
+          files: |
+            mosh/src/frontend/mosh-client
+            mosh/src/frontend/mosh-server
